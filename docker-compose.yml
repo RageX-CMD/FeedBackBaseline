@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "5151:5151"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "5151"
+    volumes:
+      - ./eventwochen.db:/app/eventwochen.db
+      - ./output:/app/output
+    restart: unless-stopped

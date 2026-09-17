@@ -1,23 +1,33 @@
 # Naruto Online Eventwochen-Reporter
 
-Kleine lokale App (laeuft im Browser, keine Installation eines separaten
-Programms noetig ausser Python) fuer den Feedback-Report zu den 4
+Kleine lokale App (laeuft im Browser) fuer den Feedback-Report zu den 4
 Eventwochen im Forum-Zyklus. Wenn du fuer ein Event nichts Neues eintraegst,
-wird automatisch das Feedback vom letzten Mal in das docx uebernommen.
+wird automatisch das Feedback vom letzten Mal in Word- und Textdokument
+uebernommen.
 
-## Einrichtung (einmalig)
+## Starten mit Docker (empfohlen)
+
+Docker Desktop muss installiert sein. Im Projektordner:
+
+```
+docker compose up --build
+```
+
+Danach im Browser `http://127.0.0.1:5151` oeffnen. Datenbank und erzeugte
+Dateien bleiben ueber Volumes erhalten (`eventwochen.db` und `output/`).
+Zum Beenden `Strg+C` bzw. `docker compose down`.
+
+## Starten ohne Docker
 
 1. Python 3 muss installiert sein.
 2. Abhaengigkeiten installieren:
    ```
    pip install -r requirements.txt
    ```
-
-## Starten
-
-```
-python app.py
-```
+3. Starten:
+   ```
+   python app.py
+   ```
 
 Es oeffnet sich automatisch ein Browserfenster auf `http://127.0.0.1:5151`.
 Falls nicht, den Link einfach manuell im Browser oeffnen.
@@ -32,9 +42,9 @@ gespeicherte Feedback. Du kannst:
 Oben kannst du jederzeit zwischen Eventwoche 1-4 wechseln (z.B. um
 nachtraeglich Feedback fuer eine andere Woche einzutragen).
 
-Unten auf "Dokument erstellen" klicken -> das docx wird erzeugt und kann
-direkt aus der App heruntergeladen werden (Link erscheint oben auf der
-Seite beim naechsten Laden).
+Unten auf "Word- und Textdokument erstellen" klicken -> Word (.docx) und
+Text (.txt) werden erzeugt und koennen direkt aus der App heruntergeladen
+werden (Links erscheinen oben auf der Seite).
 
 Zum Beenden das Terminal-Fenster schliessen bzw. mit Strg+C stoppen.
 
@@ -61,7 +71,7 @@ Alles, was du in der App eintraegst, wird dauerhaft in `eventwochen.db`
 (SQLite, wird beim ersten Start automatisch angelegt) gespeichert:
 - `events` - aktuellstes Feedback je Event
 - `feedback_history` - komplette Historie aller Aenderungen (mit Datum)
-- `runs` - Protokoll aller erzeugten docx-Dateien
+- `runs` - Protokoll aller erzeugten Dokumente
 
 Die Datei `eventwochen.db` bitte nicht loeschen, sonst geht die Historie
 verloren.
@@ -73,7 +83,9 @@ verloren.
 - `config.py` - Einstellungen (Zyklus-Startdatum)
 - `cycle.py` - Logik zur Berechnung der aktuellen Eventwoche
 - `db.py` - Datenbankzugriff (SQLite)
-- `docx_export.py` - erzeugt das docx-Dokument
+- `docx_export.py` - erzeugt das Word-Dokument
+- `txt_export.py` - erzeugt das Textdokument
 - `seed_data.py` - dein Anfangs-Feedback zu allen Events
 - `eventwochen.db` - die Datenbank (wird automatisch erstellt/gepflegt)
-- `output/` - hier landen die erzeugten docx-Dateien
+- `output/` - hier landen die erzeugten Word- und Textdateien
+- `Dockerfile` / `docker-compose.yml` - Start per Docker

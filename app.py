@@ -5,11 +5,14 @@ Eventwochen-Reporter - GUI-App (laeuft lokal im Browser).
 Start:
     python app.py
 
-Oeffnet automatisch http://127.0.0.1:5151 im Standardbrowser. Dort kannst
-du fuer die aktuelle (oder eine beliebige) Eventwoche jedes Event einsehen,
-Feedback eintragen/aendern oder per Klick auf "Feedback vom letzten Mal
-behalten" einfach ueberspringen. Am Ende erzeugst du per Knopfdruck das
-docx-Dokument.
+Oder per Docker:
+    docker compose up --build
+
+Oeffnet automatisch http://127.0.0.1:5151 im Standardbrowser (nur beim
+lokalen Python-Start). Dort kannst du fuer die aktuelle (oder eine
+beliebige) Eventwoche jedes Event einsehen, Feedback eintragen/aendern
+oder das Feld leer lassen, um das alte Feedback zu behalten. Am Ende
+erzeugst du per Knopfdruck Word- und Textdokument.
 """
 
 import os
@@ -20,10 +23,11 @@ from datetime import date
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
 
 import db
-from config import OUTPUT_DIR
+from config import OUTPUT_DIR, HOST, PORT
 from cycle import current_week_info, week_info_for
 from seed_data import SEED_DATA
 from docx_export import build_docx
+from txt_export import build_txt
 
 app = Flask(__name__)
 app.secret_key = "eventwochen-reporter-local"
@@ -47,6 +51,7 @@ def index():
     events = db.get_events(week_number)
 
     last_doc = db.get_last_run(week_number)
+    last_docx, last_txt = download_names(last_doc)
 
     return render_template(
         "index.html",
@@ -57,6 +62,8 @@ def index():
         events=events,
         today=date.today(),
         last_doc=last_doc,
+        last_docx=last_docx,
+        last_txt=last_txt,
     )
 
 
@@ -80,10 +87,11 @@ def save():
     week_start = date.fromisoformat(week_start_iso)
     week_end = date.fromisoformat(week_end_iso)
 
-    path = build_docx(WEEK_NAMES[week_number], week_number, week_start, week_end, events)
-    db.log_run(week_number, week_start, week_end, path)
+    docx_path = build_docx(WEEK_NAMES[week_number], week_number, week_start, week_end, events)
+    build_txt(WEEK_NAMES[week_number], week_number, week_start, week_end, events)
+    db.log_run(week_number, week_start, week_end, os.path.basename(docx_path))
 
-    flash(f"Dokument erstellt ({changed} Feedback-Eintrag/e aktualisiert).", "success")
+    flash(f"Word- und Textdokument erstellt ({changed} Feedback-Eintrag/e aktualisiert).", "success")
     return redirect(url_for("index", week=week_number))
 
 
@@ -92,11 +100,23 @@ def download(filename):
     return send_from_directory(OUTPUT_DIR, filename, as_attachment=True)
 
 
+def download_names(last_doc):
+    if not last_doc:
+        return None, None
+    stored = (last_doc["docx_path"] or "").replace("\\", "/")
+    docx_name = os.path.basename(stored)
+    txt_name = os.path.splitext(docx_name)[0] + ".txt"
+    last_docx = docx_name if os.path.isfile(os.path.join(OUTPUT_DIR, docx_name)) else None
+    last_txt = txt_name if os.path.isfile(os.path.join(OUTPUT_DIR, txt_name)) else None
+    return last_docx, last_txt
+
+
 def open_browser():
-    webbrowser.open_new("http://127.0.0.1:5151")
+    webbrowser.open_new(f"http://{HOST}:{PORT}")
 
 
 if __name__ == "__main__":
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    threading.Timer(1.0, open_browser).start()
-    app.run(host="127.0.0.1", port=5151, debug=False)
+    if HOST in ("127.0.0.1", "localhost"):
+        threading.Timer(1.0, open_browser).start()
+    app.run(host=HOST, port=PORT, debug=False)

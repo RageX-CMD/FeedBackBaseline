@@ -107,6 +107,20 @@
     color: var(--accent-2);
     text-decoration: none;
     font-weight: 600;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 10px;
+    position: relative;
+    z-index: 1;
+  }
+  .last-doc a:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .downloads {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
   }
   .event-card {
     background: var(--panel);
@@ -224,10 +238,17 @@
     {% endfor %}
   {% endwith %}
 
-  {% if last_doc %}
+  {% if last_doc and (last_docx or last_txt) %}
   <div class="last-doc">
     <span>Letztes Dokument fuer diese Woche erstellt am {{ last_doc.created_at[:16].replace('T', ' um ') }} Uhr</span>
-    <a href="{{ url_for('download', filename=last_doc.docx_path.split('/')[-1]) }}">Herunterladen &darr;</a>
+    <span class="downloads">
+      {% if last_docx %}
+        <a href="{{ url_for('download', filename=last_docx) }}">Word (.docx) &darr;</a>
+      {% endif %}
+      {% if last_txt %}
+        <a href="{{ url_for('download', filename=last_txt) }}">Text (.txt) &darr;</a>
+      {% endif %}
+    </span>
   </div>
   {% endif %}
 
@@ -252,7 +273,7 @@
     {% endfor %}
 
     <div class="submit-bar">
-      <button type="submit" class="submit-btn">Dokument erstellen</button>
+      <button type="submit" class="submit-btn">Word- und Textdokument erstellen</button>
     </div>
   </form>
 </main>

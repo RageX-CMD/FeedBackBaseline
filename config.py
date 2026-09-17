@@ -18,7 +18,10 @@ einmalig an einen bekannten Donnerstag an, an dem sicher Eventwoche 1
 begonnen hat. Danach rechnet sich alles automatisch weiter.
 """
 
+import os
 from datetime import date
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Donnerstag, an dem Eventwoche 1 zuletzt sicher begonnen hat.
 # --> Bei Bedarf anpassen!
@@ -27,5 +30,7 @@ START_DATE = date(2026, 9, 3)
 WEEK_LENGTH_DAYS = 7
 NUM_WEEKS_IN_CYCLE = 4
 
-DB_PATH = "eventwochen.db"
-OUTPUT_DIR = "output"
+DB_PATH = os.environ.get("DB_PATH", os.path.join(BASE_DIR, "eventwochen.db"))
+OUTPUT_DIR = os.environ.get("OUTPUT_DIR", os.path.join(BASE_DIR, "output"))
+HOST = os.environ.get("HOST", "127.0.0.1")
+PORT = int(os.environ.get("PORT", "5151"))
