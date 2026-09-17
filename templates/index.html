@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>{{ week_names[week_number] }} - Feedback</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1e222b;
+    --border: #2a2f3a;
+    --text: #eef0f4;
+    --text-dim: #9aa1b1;
+    --accent: #ff7a3d;
+    --accent-2: #ffb37a;
+    --good: #4ade80;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 10% -10%, #23283a 0%, var(--bg) 60%);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 120px;
+  }
+  header {
+    padding: 40px 6vw 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .titleblock h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+  }
+  .titleblock .sub {
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #1a0f07;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    margin-right: 8px;
+  }
+  .week-switch {
+    display: flex;
+    gap: 8px;
+  }
+  .week-switch a {
+    text-decoration: none;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    transition: all 0.15s ease;
+  }
+  .week-switch a.active {
+    background: var(--panel-2);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+  .week-switch a:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 6vw;
+  }
+  .flash {
+    background: rgba(74, 222, 128, 0.12);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    color: var(--good);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+  .last-doc {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .last-doc a {
+    color: var(--accent-2);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .event-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 14px;
+    transition: border-color 0.15s ease;
+  }
+  .event-card:hover {
+    border-color: #3a4152;
+  }
+  .event-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .event-num {
+    color: var(--accent-2);
+    font-weight: 700;
+    font-size: 13px;
+    min-width: 22px;
+  }
+  .event-name {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .old-feedback {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin: 0 0 10px;
+    padding: 8px 12px;
+    background: var(--panel-2);
+    border-radius: 8px;
+    border-left: 3px solid var(--border);
+  }
+  .old-feedback.empty {
+    font-style: italic;
+    opacity: 0.7;
+  }
+  textarea {
+    width: 100%;
+    min-height: 64px;
+    resize: vertical;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    line-height: 1.4;
+  }
+  textarea::placeholder {
+    color: #5c6272;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .hint {
+    font-size: 11.5px;
+    color: #6b7280;
+    margin-top: 6px;
+  }
+  .submit-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(180deg, transparent, var(--bg) 30%);
+    padding: 24px 6vw 28px;
+    display: flex;
+    justify-content: center;
+  }
+  .submit-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #1a0f07;
+    border: none;
+    padding: 14px 36px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(255, 122, 61, 0.35);
+    transition: transform 0.1s ease;
+  }
+  .submit-btn:hover {
+    transform: translateY(-1px);
+  }
+  .submit-btn:active {
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="titleblock">
+    <h1><span class="badge">{{ week_names[week_number] }}</span></h1>
+    <div class="sub">{{ week_start.strftime('%d.%m.%Y') }} &ndash; {{ week_end.strftime('%d.%m.%Y') }} &middot; heute: {{ today.strftime('%d.%m.%Y') }}</div>
+  </div>
+  <div class="week-switch">
+    {% for w in [1,2,3,4] %}
+      <a href="{{ url_for('index', week=w) }}" class="{{ 'active' if w == week_number else '' }}">{{ week_names[w] }}</a>
+    {% endfor %}
+  </div>
+</header>
+
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if last_doc %}
+  <div class="last-doc">
+    <span>Letztes Dokument fuer diese Woche erstellt am {{ last_doc.created_at[:16].replace('T', ' um ') }} Uhr</span>
+    <a href="{{ url_for('download', filename=last_doc.docx_path.split('/')[-1]) }}">Herunterladen &darr;</a>
+  </div>
+  {% endif %}
+
+  <form method="POST" action="{{ url_for('save') }}">
+    <input type="hidden" name="week_number" value="{{ week_number }}">
+    <input type="hidden" name="week_start" value="{{ week_start.isoformat() }}">
+    <input type="hidden" name="week_end" value="{{ week_end.isoformat() }}">
+
+    {% for ev in events %}
+    <div class="event-card">
+      <div class="event-head">
+        <span class="event-num">{{ ev.event_order }}</span>
+        <span class="event-name">{{ ev.name }}</span>
+      </div>
+      {% if ev.feedback %}
+        <p class="old-feedback">Zuletzt: {{ ev.feedback }}</p>
+      {% else %}
+        <p class="old-feedback empty">Noch kein Feedback vorhanden</p>
+      {% endif %}
+      <textarea name="feedback_{{ ev.event_order }}" placeholder="Neues Feedback eintragen (leer lassen = altes behalten)"></textarea>
+    </div>
+    {% endfor %}
+
+    <div class="submit-bar">
+      <button type="submit" class="submit-btn">Dokument erstellen</button>
+    </div>
+  </form>
+</main>
+
+</body>
+</html>
