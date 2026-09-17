@@ -32,5 +32,22 @@ NUM_WEEKS_IN_CYCLE = 4
 
 DB_PATH = os.environ.get("DB_PATH", os.path.join(BASE_DIR, "eventwochen.db"))
 OUTPUT_DIR = os.environ.get("OUTPUT_DIR", os.path.join(BASE_DIR, "output"))
+SNAPSHOT_DIR = os.environ.get("SNAPSHOT_DIR", os.path.join(BASE_DIR, "snapshots"))
 HOST = os.environ.get("HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", "5151"))
+
+FORUM_POST_BASE = "https://forum-narutode.narutowebgame.com/page/show-post-{id}-1.html"
+
+# Letzter bekannter Foren-Post je Eventwoche (alt = vorheriger Zyklus).
+# Eventwoche 4 hat diese Runde noch keinen neuen Post — new ist deshalb
+# "letztes Mal" (8217), old ist der Stand davor (8213).
+FORUM_LINKS = {
+    1: {"old": 8214, "new": 8219, "new_is_current": True},
+    2: {"old": 8215, "new": 8221, "new_is_current": True},
+    3: {"old": 8216, "new": 8224, "new_is_current": True},
+    4: {"old": 8213, "new": 8217, "new_is_current": False},
+}
+
+
+def forum_post_url(post_id):
+    return FORUM_POST_BASE.format(id=post_id)

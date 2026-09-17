@@ -91,11 +91,104 @@
     font-weight: 700;
   }
   main {
-    max-width: 880px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 32px 6vw;
   }
-  .flash {
+  .compare-table-wrap {
+    overflow-x: auto;
+    margin-top: 16px;
+  }
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .compare-table th, .compare-table td {
+    border: 1px solid var(--border);
+    padding: 10px;
+    vertical-align: top;
+    text-align: left;
+  }
+  .compare-table th {
+    background: var(--panel-2);
+    color: var(--text-dim);
+    font-weight: 600;
+  }
+  .compare-table .num {
+    color: var(--accent-2);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .status-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--panel-2);
+    color: var(--text-dim);
+  }
+  .status-pill.changed { color: #1a0f07; background: var(--accent); }
+  .status-pill.same { color: #052e16; background: var(--good); }
+  .event-diff {
+    font-size: 12px;
+    line-height: 1.45;
+    margin: 0 0 6px;
+    word-break: break-word;
+  }
+  .diff-del { color: #f87171; text-decoration: line-through; }
+  .diff-add { color: var(--good); }
+  .diff-same { color: var(--text); }
+  .diff-cell { min-width: 220px; max-width: 360px; }
+  .flash.error {
+    background: rgba(255, 122, 61, 0.12);
+    border-color: var(--accent);
+    color: var(--accent-2);
+  }
+  .forum-box input[type="url"] {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 13px;
+    margin: 6px 0 12px;
+  }
+  .forum-box label {
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+  .forum-box button {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #1a0f07;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .diff-line {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .diff-line.add { color: var(--good); }
+  .diff-line.del { color: #f87171; }
+  .img-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 10px 0 16px;
+  }
+  .img-row img {
+    max-width: 160px;
+    max-height: 120px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
     background: rgba(74, 222, 128, 0.12);
     border: 1px solid rgba(74, 222, 128, 0.4);
     color: var(--good);
@@ -264,6 +357,64 @@
   .submit-btn:active {
     transform: translateY(0);
   }
+  .discord-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 24px;
+  }
+  .discord-box h2 {
+    margin: 0 0 6px;
+    font-size: 15px;
+  }
+  .discord-box .hint-line {
+    color: var(--text-dim);
+    font-size: 12.5px;
+    margin-bottom: 12px;
+  }
+  .discord-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .discord-toolbar button {
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .discord-toolbar button.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #1a0f07;
+    border: none;
+  }
+  .discord-toolbar button:hover {
+    border-color: var(--accent);
+  }
+  .discord-status {
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+  .discord-preview {
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    max-height: 280px;
+    overflow: auto;
+    margin: 0;
+  }
 </style>
 </head>
 <body>
@@ -286,7 +437,7 @@
 <main>
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
-      <div class="flash">{{ message }}</div>
+      <div class="flash {{ category }}">{{ message }}</div>
     {% endfor %}
   {% endwith %}
 
@@ -303,6 +454,136 @@
       {% endif %}
     </span>
     <a href="{{ url_for('kalender') }}">Kalender-Erinnerung (.ics)</a>
+  </div>
+
+  <div class="discord-box">
+    <h2>Discord</h2>
+    <p class="hint-line">
+      Komplette {{ week_names[week_number] }} zum Reinposten.
+      Enthaelt den gespeicherten Stand (neue Texte zuerst unten speichern).
+      {% if discord_parts|length > 1 %}
+        Discord-Limit (Nitro): {{ discord_parts|length }} Teile, nacheinander kopieren.
+      {% endif %}
+    </p>
+    <div class="discord-toolbar">
+      <button type="button" class="primary" id="discord-copy">
+        {% if discord_parts|length == 1 %}Fuer Discord kopieren{% else %}Teil 1/{{ discord_parts|length }} kopieren{% endif %}
+      </button>
+      {% if discord_parts|length > 1 %}
+        <button type="button" id="discord-prev">Vorheriges Teil</button>
+      {% endif %}
+      <span class="discord-status" id="discord-status">{{ discord_parts[0]|length }} / 4000 Zeichen</span>
+    </div>
+    <pre class="discord-preview" id="discord-preview"></pre>
+  </div>
+
+  <div class="discord-box forum-box">
+    <h2>Forum-Vergleich</h2>
+    <p class="hint-line">
+      Zwei Links derselben Eventwoche: letzter Zyklus vs. aktuell.
+      Die App liest Text und Bilder und zeigt, was sich geaendert hat.
+      {% if not forum_new_is_current %}
+        Eventwoche 4 hat diese Runde noch keinen neuen Post — Vergleich ist
+        „vor 2 Wochen“ gegen „letztes Mal“.
+      {% endif %}
+    </p>
+    <form method="POST" action="{{ url_for('snapshot') }}">
+      <input type="hidden" name="week_number" value="{{ week_number }}">
+      <input type="hidden" name="week_start" value="{{ week_start.isoformat() }}">
+      <label>Letzter Zyklus (alte Eventwoche)</label>
+      <input type="url" name="forum_url_old" placeholder="https://... alter Foren-Post" value="{% if forum_analysis and forum_analysis.has_previous %}{{ forum_analysis.previous.source_url }}{% else %}{{ forum_old_url }}{% endif %}">
+      <label>{% if forum_new_is_current %}Aktueller Zyklus{% else %}Letztes Mal (noch keine neue Woche 4){% endif %}</label>
+      <input type="url" name="forum_url_new" placeholder="https://... aktueller Foren-Post" value="{% if current_snap %}{{ current_snap.source_url }}{% else %}{{ forum_new_url }}{% endif %}">
+      <button type="submit">Links laden und vergleichen</button>
+    </form>
+
+    {% if current_snap and forum_analysis %}
+      {% if not forum_analysis.has_previous %}
+        <p class="hint-line" style="margin-top:14px">Aktueller Post ist gespeichert. Fuer den Diff noch den Link vom letzten Zyklus eintragen.</p>
+        {% if forum_analysis.event_rows %}
+        <div class="compare-table-wrap">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Event</th>
+                <th>Bilder</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in forum_analysis.event_rows %}
+              <tr>
+                <td class="num">{{ row.order }}</td>
+                <td>{{ row.name }}</td>
+                <td>
+                  {% for img in row.new_images %}
+                    <img src="{{ img.orig_url }}" alt="" referrerpolicy="no-referrer">
+                  {% endfor %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+      {% else %}
+        <p class="hint-line" style="margin-top:14px">
+          Vergleich gegen {{ forum_analysis.previous.week_start }}
+          {% if forum_analysis.text_changed %}&middot; Text hat sich geaendert{% else %}&middot; Text unveraendert{% endif %}
+        </p>
+        {% if forum_analysis.event_rows %}
+        <div class="compare-table-wrap">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Event</th>
+                <th>Letzter Zyklus</th>
+                <th>Aktuell</th>
+                <th>Unterschied</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in forum_analysis.event_rows %}
+              <tr>
+                <td class="num">{{ row.order }}</td>
+                <td>
+                  {{ row.name }}
+                  {% if row.old_name and row.new_name and row.old_name != row.new_name %}
+                    <div class="hint-line">vorher: {{ row.old_name }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  {% for img in row.old_images %}
+                    <img src="{{ img.orig_url }}" alt="alt" referrerpolicy="no-referrer">
+                  {% else %}
+                    <span class="hint-line">—</span>
+                  {% endfor %}
+                </td>
+                <td>
+                  {% for img in row.new_images %}
+                    <img src="{{ img.orig_url }}" alt="neu" referrerpolicy="no-referrer">
+                  {% else %}
+                    <span class="hint-line">—</span>
+                  {% endfor %}
+                </td>
+                <td class="diff-cell">
+                  {% for change in row.changes %}
+                    <div class="event-diff">
+                      {% for part in change.parts %}
+                        <span class="diff-{{ part.kind }}">{{ part.text }}</span>
+                      {% endfor %}
+                    </div>
+                  {% endfor %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endif %}
+      {% endif %}
+    {% endif %}
   </div>
 
   {% if last_doc and (last_docx or last_txt) %}
@@ -344,6 +625,55 @@
     </div>
   </form>
 </main>
+
+<script>
+  const discordParts = {{ discord_parts | tojson }};
+  let discordIndex = 0;
+
+  function renderDiscord() {
+    const preview = document.getElementById("discord-preview");
+    const status = document.getElementById("discord-status");
+    const copyBtn = document.getElementById("discord-copy");
+    const part = discordParts[discordIndex] || "";
+    preview.textContent = part;
+    const n = discordParts.length;
+    status.textContent = part.length + " / 4000 Zeichen";
+    if (n === 1) {
+      copyBtn.textContent = "Fuer Discord kopieren";
+    } else {
+      copyBtn.textContent = "Teil " + (discordIndex + 1) + "/" + n + " kopieren";
+    }
+  }
+
+  async function copyDiscord() {
+    const part = discordParts[discordIndex] || "";
+    const status = document.getElementById("discord-status");
+    const n = discordParts.length;
+    try {
+      await navigator.clipboard.writeText(part);
+      if (n > 1 && discordIndex < n - 1) {
+        const copied = discordIndex + 1;
+        discordIndex += 1;
+        renderDiscord();
+        status.textContent = "Teil " + copied + " kopiert. Jetzt Teil " + (discordIndex + 1) + "/" + n + " kopieren.";
+      } else {
+        status.textContent = n > 1 ? "Letztes Teil kopiert. Fertig." : "Kopiert. In Discord einfuegen.";
+      }
+    } catch (err) {
+      status.textContent = "Kopieren blockiert — Text oben markieren und Strg+C.";
+    }
+  }
+
+  document.getElementById("discord-copy").addEventListener("click", copyDiscord);
+  const prev = document.getElementById("discord-prev");
+  if (prev) {
+    prev.addEventListener("click", function () {
+      discordIndex = (discordIndex - 1 + discordParts.length) % discordParts.length;
+      renderDiscord();
+    });
+  }
+  renderDiscord();
+</script>
 
 </body>
 </html>

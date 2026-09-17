@@ -18,20 +18,23 @@ erzeugst du per Knopfdruck Word- und Textdokument.
 import os
 import threading
 import webbrowser
-from datetime import date
+from datetime import date, timedelta
 
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, Response
 
 import db
-from config import OUTPUT_DIR, HOST, PORT
+from config import OUTPUT_DIR, HOST, PORT, SNAPSHOT_DIR, FORUM_LINKS, forum_post_url
 from cycle import current_week_info, week_info_for
 from seed_data import SEED_DATA
 from docx_export import build_docx
 from txt_export import build_txt
 from ics_export import build_ics
+from discord_export import build_discord_parts
+from forum_compare import capture_forum_url, analyze
 
 app = Flask(__name__)
 app.secret_key = "eventwochen-reporter-local"
+app.config["MAX_CONTENT_LENGTH"] = 32 * 1024 * 1024
 
 WEEK_NAMES = {1: "Eventwoche 1", 2: "Eventwoche 2", 3: "Eventwoche 3", 4: "Eventwoche 4"}
 
@@ -61,6 +64,24 @@ def index():
         current_run and current_run.get("week_start") == current_start.isoformat()
     )
     days_until_deadline = (current_end - today).days
+    discord_parts = build_discord_parts(
+        WEEK_NAMES[week_number], week_start, week_end, events
+    )
+
+    current_snap = db.get_snapshot_for_week(week_number, week_start.isoformat())
+    previous_snap = db.get_previous_snapshot(week_number, week_start.isoformat())
+    curr_images = db.get_snapshot_images(current_snap["id"]) if current_snap else []
+    prev_images = db.get_snapshot_images(previous_snap["id"]) if previous_snap else []
+    forum_analysis = (
+        analyze(previous_snap, current_snap, prev_images, curr_images)
+        if current_snap
+        else None
+    )
+
+    forum_links = FORUM_LINKS.get(week_number, {})
+    forum_old_url = forum_post_url(forum_links["old"]) if forum_links.get("old") else ""
+    forum_new_url = forum_post_url(forum_links["new"]) if forum_links.get("new") else ""
+    forum_new_is_current = forum_links.get("new_is_current", True)
 
     return render_template(
         "index.html",
@@ -77,6 +98,12 @@ def index():
         current_end=current_end,
         days_until_deadline=days_until_deadline,
         uploaded_this_week=uploaded_this_week,
+        discord_parts=discord_parts,
+        current_snap=current_snap,
+        forum_analysis=forum_analysis,
+        forum_old_url=forum_old_url,
+        forum_new_url=forum_new_url,
+        forum_new_is_current=forum_new_is_current,
     )
 
 
@@ -117,6 +144,37 @@ def save():
     return redirect(url_for("index", week=week_number))
 
 
+@app.route("/snapshot", methods=["POST"])
+def snapshot():
+    week_number = int(request.form["week_number"])
+    week_start_iso = request.form["week_start"]
+    old_url = (request.form.get("forum_url_old") or "").strip()
+    new_url = (request.form.get("forum_url_new") or "").strip()
+
+    if not new_url:
+        flash("Bitte den Link zur aktuellen Eventwoche eintragen.", "error")
+        return redirect(url_for("index", week=week_number))
+
+    try:
+        if old_url:
+            old_start = (date.fromisoformat(week_start_iso) - timedelta(days=28)).isoformat()
+            old_text, old_images, old_events = capture_forum_url(old_url)
+            db.save_snapshot(week_number, old_start, old_url, old_text, old_images, old_events)
+        new_text, new_images, new_events = capture_forum_url(new_url)
+        db.save_snapshot(week_number, week_start_iso, new_url, new_text, new_images, new_events)
+    except Exception as exc:
+        flash(f"Forum-Link nicht lesbar: {exc}", "error")
+        return redirect(url_for("index", week=week_number))
+
+    flash("Forum-Links geladen. Vergleich steht oben.", "success")
+    return redirect(url_for("index", week=week_number))
+
+
+@app.route("/snapshots/<path:filename>")
+def snapshot_file(filename):
+    return send_from_directory(SNAPSHOT_DIR, filename)
+
+
 @app.route("/download/<path:filename>")
 def download(filename):
     return send_from_directory(OUTPUT_DIR, filename, as_attachment=True)
@@ -139,6 +197,7 @@ def open_browser():
 
 if __name__ == "__main__":
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+    os.makedirs(SNAPSHOT_DIR, exist_ok=True)
     if HOST in ("127.0.0.1", "localhost"):
         threading.Timer(1.0, open_browser).start()
     app.run(host=HOST, port=PORT, debug=False)

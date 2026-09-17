@@ -42,9 +42,9 @@ gespeicherte Feedback. Du kannst:
 Oben kannst du jederzeit zwischen Eventwoche 1-4 wechseln (z.B. um
 nachtraeglich Feedback fuer eine andere Woche einzutragen).
 
-Unten auf "Word- und Textdokument erstellen" klicken -> Word (.docx) und
-Text (.txt) werden erzeugt und koennen direkt aus der App heruntergeladen
-werden (Links erscheinen oben auf der Seite).
+Oben in der App kannst du die komplette Eventwoche fuer Discord kopieren
+(Markdown, ggf. in mehrere Teile unter 4000 Zeichen, Discord Nitro). Word/TXT bleiben
+zum Archivieren.
 
 Oben in der App steht die Upload-Frist (immer Mittwoch, Ende der laufenden
 Eventwoche). Darueber kannst du einmalig `Kalender-Erinnerung (.ics)`
@@ -93,6 +93,7 @@ verloren.
 - `docx_export.py` - erzeugt das Word-Dokument
 - `txt_export.py` - erzeugt das Textdokument
 - `ics_export.py` - Kalender-Erinnerung jeden Mittwoch (.ics)
+- `discord_export.py` - Discord-Text (volle Woche, in Channel-Stuecke)
 - `seed_data.py` - dein Anfangs-Feedback zu allen Events
 - `eventwochen.db` - die Datenbank (wird automatisch erstellt/gepflegt)
 - `output/` - hier landen die erzeugten Word- und Textdateien

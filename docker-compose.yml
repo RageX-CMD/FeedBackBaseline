@@ -9,4 +9,5 @@ services:
     volumes:
       - ./eventwochen.db:/app/eventwochen.db
       - ./output:/app/output
+      - ./snapshots:/app/snapshots
     restart: unless-stopped

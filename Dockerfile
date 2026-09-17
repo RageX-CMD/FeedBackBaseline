@@ -11,8 +11,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN mkdir -p output
+RUN mkdir -p output snapshots
 
 EXPOSE 5151
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5151", "--workers", "1", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5151", "--workers", "1", "--timeout", "120", "app:app"]

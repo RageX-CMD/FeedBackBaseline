@@ -1,7 +1,9 @@
 """SQLite-Zugriffsschicht fuer die Eventwochen-Daten."""
 
+import json
 import sqlite3
 from datetime import datetime
+
 from config import DB_PATH
 
 SCHEMA = """
@@ -31,6 +33,24 @@ CREATE TABLE IF NOT EXISTS runs (
     docx_path    TEXT NOT NULL,
     created_at   TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS forum_snapshots (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    week_number  INTEGER NOT NULL,
+    week_start   TEXT NOT NULL,
+    source_url   TEXT,
+    body_text    TEXT NOT NULL DEFAULT '',
+    created_at   TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS forum_snapshot_images (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    snapshot_id  INTEGER NOT NULL,
+    sort_order   INTEGER NOT NULL,
+    filename     TEXT NOT NULL,
+    phash        TEXT NOT NULL,
+    orig_url     TEXT
+);
 """
 
 
@@ -43,6 +63,9 @@ def get_connection():
 def init_db():
     conn = get_connection()
     conn.executescript(SCHEMA)
+    cols = [row[1] for row in conn.execute("PRAGMA table_info(forum_snapshots)")]
+    if "events_json" not in cols:
+        conn.execute("ALTER TABLE forum_snapshots ADD COLUMN events_json TEXT NOT NULL DEFAULT '[]'")
     conn.commit()
     conn.close()
 
@@ -126,3 +149,93 @@ def log_run(week_number, week_start, week_end, docx_path):
     )
     conn.commit()
     conn.close()
+
+
+def get_snapshot_for_week(week_number, week_start_iso):
+    conn = get_connection()
+    cur = conn.execute(
+        """SELECT id, week_number, week_start, source_url, body_text, created_at, events_json
+           FROM forum_snapshots
+           WHERE week_number = ? AND week_start = ?
+           ORDER BY id DESC LIMIT 1""",
+        (week_number, week_start_iso),
+    )
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def get_previous_snapshot(week_number, week_start_iso):
+    conn = get_connection()
+    cur = conn.execute(
+        """SELECT id, week_number, week_start, source_url, body_text, created_at, events_json
+           FROM forum_snapshots
+           WHERE week_number = ? AND week_start < ?
+           ORDER BY week_start DESC, id DESC LIMIT 1""",
+        (week_number, week_start_iso),
+    )
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def get_snapshot_images(snapshot_id):
+    conn = get_connection()
+    cur = conn.execute(
+        """SELECT id, sort_order, filename, phash, orig_url
+           FROM forum_snapshot_images
+           WHERE snapshot_id = ?
+           ORDER BY sort_order""",
+        (snapshot_id,),
+    )
+    rows = [dict(r) for r in cur.fetchall()]
+    conn.close()
+    return rows
+
+
+def delete_snapshot(snapshot_id):
+    conn = get_connection()
+    cur = conn.execute(
+        "SELECT filename FROM forum_snapshot_images WHERE snapshot_id = ?",
+        (snapshot_id,),
+    )
+    files = [r["filename"] for r in cur.fetchall()]
+    conn.execute("DELETE FROM forum_snapshot_images WHERE snapshot_id = ?", (snapshot_id,))
+    conn.execute("DELETE FROM forum_snapshots WHERE id = ?", (snapshot_id,))
+    conn.commit()
+    conn.close()
+    return files
+
+
+def save_snapshot(week_number, week_start_iso, source_url, body_text, images, events=None):
+    """
+    images: list of dicts {filename, phash, orig_url}
+    Ersetzt einen vorhandenen Snapshot derselben Woche/desselben Starts.
+    """
+    existing = get_snapshot_for_week(week_number, week_start_iso)
+    old_files = delete_snapshot(existing["id"]) if existing else []
+
+    conn = get_connection()
+    cur = conn.execute(
+        """INSERT INTO forum_snapshots (week_number, week_start, source_url, body_text, created_at, events_json)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (
+            week_number,
+            week_start_iso,
+            source_url or "",
+            body_text or "",
+            datetime.now().isoformat(),
+            json.dumps(events or [], ensure_ascii=False),
+        ),
+    )
+    snapshot_id = cur.lastrowid
+    for order, img in enumerate(images):
+        conn.execute(
+            """INSERT INTO forum_snapshot_images
+               (snapshot_id, sort_order, filename, phash, orig_url)
+               VALUES (?, ?, ?, ?, ?)""",
+            (snapshot_id, order, img["filename"], img["phash"], img.get("orig_url") or ""),
+        )
+    conn.commit()
+    conn.close()
+    return snapshot_id, old_files
