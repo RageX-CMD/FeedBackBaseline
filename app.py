@@ -20,7 +20,7 @@ import threading
 import webbrowser
 from datetime import date
 
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, Response
 
 import db
 from config import OUTPUT_DIR, HOST, PORT
@@ -28,6 +28,7 @@ from cycle import current_week_info, week_info_for
 from seed_data import SEED_DATA
 from docx_export import build_docx
 from txt_export import build_txt
+from ics_export import build_ics
 
 app = Flask(__name__)
 app.secret_key = "eventwochen-reporter-local"
@@ -53,6 +54,14 @@ def index():
     last_doc = db.get_last_run(week_number)
     last_docx, last_txt = download_names(last_doc)
 
+    today = date.today()
+    current_num, current_start, current_end = current_week_info(today)
+    current_run = db.get_last_run(current_num)
+    uploaded_this_week = bool(
+        current_run and current_run.get("week_start") == current_start.isoformat()
+    )
+    days_until_deadline = (current_end - today).days
+
     return render_template(
         "index.html",
         week_number=week_number,
@@ -60,10 +69,23 @@ def index():
         week_start=week_start,
         week_end=week_end,
         events=events,
-        today=date.today(),
+        today=today,
         last_doc=last_doc,
         last_docx=last_docx,
         last_txt=last_txt,
+        current_num=current_num,
+        current_end=current_end,
+        days_until_deadline=days_until_deadline,
+        uploaded_this_week=uploaded_this_week,
+    )
+
+
+@app.route("/kalender.ics")
+def kalender():
+    return Response(
+        build_ics(),
+        mimetype="text/calendar; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=Eventwochen-Upload-Erinnerung.ics"},
     )
 
 

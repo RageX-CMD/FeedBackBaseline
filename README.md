@@ -46,6 +46,13 @@ Unten auf "Word- und Textdokument erstellen" klicken -> Word (.docx) und
 Text (.txt) werden erzeugt und koennen direkt aus der App heruntergeladen
 werden (Links erscheinen oben auf der Seite).
 
+Oben in der App steht die Upload-Frist (immer Mittwoch, Ende der laufenden
+Eventwoche). Darueber kannst du einmalig `Kalender-Erinnerung (.ics)`
+herunterladen und in Outlook, Google Kalender oder Apple Kalender
+importieren. Der Termin wiederholt sich jede Woche mittwochs 18:00
+(Zeitzone Europe/Berlin) und erinnert dich am Dienstag sowie 15 Minuten
+vorher.
+
 Zum Beenden das Terminal-Fenster schliessen bzw. mit Strg+C stoppen.
 
 ## Zeitraum / Zyklus
@@ -85,6 +92,7 @@ verloren.
 - `db.py` - Datenbankzugriff (SQLite)
 - `docx_export.py` - erzeugt das Word-Dokument
 - `txt_export.py` - erzeugt das Textdokument
+- `ics_export.py` - Kalender-Erinnerung jeden Mittwoch (.ics)
 - `seed_data.py` - dein Anfangs-Feedback zu allen Events
 - `eventwochen.db` - die Datenbank (wird automatisch erstellt/gepflegt)
 - `output/` - hier landen die erzeugten Word- und Textdateien

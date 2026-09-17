@@ -53,6 +53,12 @@
     font-size: 13px;
     margin-right: 8px;
   }
+  .header-right {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
   .week-switch {
     display: flex;
     gap: 8px;
@@ -75,6 +81,15 @@
     border-color: var(--accent);
     color: var(--text);
   }
+  .ics-link {
+    text-decoration: none;
+    color: #1a0f07;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+  }
   main {
     max-width: 880px;
     margin: 0 auto;
@@ -88,6 +103,40 @@
     border-radius: var(--radius);
     margin-bottom: 24px;
     font-size: 14px;
+  }
+  .reminder {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .reminder.urgent {
+    background: rgba(255, 122, 61, 0.12);
+    border-color: var(--accent);
+  }
+  .reminder.done {
+    border-color: rgba(74, 222, 128, 0.35);
+    color: var(--text-dim);
+  }
+  .reminder a {
+    color: var(--accent-2);
+    text-decoration: none;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .reminder a:hover {
+    border-color: var(--accent);
+    color: var(--text);
   }
   .last-doc {
     background: var(--panel);
@@ -224,10 +273,13 @@
     <h1><span class="badge">{{ week_names[week_number] }}</span></h1>
     <div class="sub">{{ week_start.strftime('%d.%m.%Y') }} &ndash; {{ week_end.strftime('%d.%m.%Y') }} &middot; heute: {{ today.strftime('%d.%m.%Y') }}</div>
   </div>
-  <div class="week-switch">
-    {% for w in [1,2,3,4] %}
-      <a href="{{ url_for('index', week=w) }}" class="{{ 'active' if w == week_number else '' }}">{{ week_names[w] }}</a>
-    {% endfor %}
+  <div class="header-right">
+    <div class="week-switch">
+      {% for w in [1,2,3,4] %}
+        <a href="{{ url_for('index', week=w) }}" class="{{ 'active' if w == week_number else '' }}">{{ week_names[w] }}</a>
+      {% endfor %}
+    </div>
+    <a class="ics-link" href="{{ url_for('kalender') }}">Kalender (.ics)</a>
   </div>
 </header>
 
@@ -237,6 +289,21 @@
       <div class="flash">{{ message }}</div>
     {% endfor %}
   {% endwith %}
+
+  <div class="reminder {% if uploaded_this_week %}done{% elif days_until_deadline <= 1 %}urgent{% endif %}">
+    <span>
+      {% if uploaded_this_week %}
+        Dokument fuer {{ week_names[current_num] }} ist erstellt. Upload-Frist: {{ current_end.strftime('%d.%m.%Y') }} (Mittwoch).
+      {% elif days_until_deadline == 0 %}
+        Heute ist Mittwoch &ndash; Feedback spaetestens heute hochladen ({{ week_names[current_num] }}).
+      {% elif days_until_deadline == 1 %}
+        Morgen (Mittwoch) muss das Feedback hochgeladen sein ({{ week_names[current_num] }}).
+      {% else %}
+        Upload-Frist: {{ current_end.strftime('%d.%m.%Y') }} (Mittwoch) &middot; noch {{ days_until_deadline }} Tage.
+      {% endif %}
+    </span>
+    <a href="{{ url_for('kalender') }}">Kalender-Erinnerung (.ics)</a>
+  </div>
 
   {% if last_doc and (last_docx or last_txt) %}
   <div class="last-doc">
