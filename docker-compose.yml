@@ -6,8 +6,12 @@ services:
     environment:
       HOST: "0.0.0.0"
       PORT: "5151"
+      DB_PATH: "/app/data/eventwochen.db"
+      OUTPUT_DIR: "/app/output"
+      SNAPSHOT_DIR: "/app/snapshots"
     volumes:
-      - ./eventwochen.db:/app/eventwochen.db
+      # Verzeichnis mounten (nicht einzelne .db-Datei) — unter Linux sonst oft Ordner statt Datei
+      - ./data:/app/data
       - ./output:/app/output
       - ./snapshots:/app/snapshots
     restart: unless-stopped

@@ -5,35 +5,45 @@ Eventwochen im Forum-Zyklus. Wenn du fuer ein Event nichts Neues eintraegst,
 wird automatisch das Feedback vom letzten Mal in Word- und Textdokument
 uebernommen.
 
-## Starten mit Docker (empfohlen)
+## Starten unter Linux (ohne Docker)
 
-Docker Desktop muss installiert sein. Im Projektordner:
+Im Projektordner:
 
 ```
+./run.sh
+```
+
+Das Skript legt bei Bedarf `.venv` an, installiert Abhaengigkeiten und startet
+die App. Browser: `http://127.0.0.1:5151`.
+
+Manuell:
+
+```
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python app.py
+```
+
+Unter Debian/Ubuntu falls noetig: `sudo apt install python3 python3-venv`.
+
+## Starten mit Docker
+
+Docker Engine bzw. Docker Desktop muss installiert sein. Im Projektordner:
+
+```
+mkdir -p data output snapshots
 docker compose up --build
 ```
 
-Danach im Browser `http://127.0.0.1:5151` oeffnen. Datenbank und erzeugte
-Dateien bleiben ueber Volumes erhalten (`eventwochen.db` und `output/`).
-Zum Beenden `Strg+C` bzw. `docker compose down`.
+Danach `http://127.0.0.1:5151` oeffnen. Persistenz liegt unter `data/`
+(SQLite), `output/` und `snapshots/`. Beenden mit `Strg+C` bzw.
+`docker compose down`.
 
-## Starten ohne Docker
+## Nutzung
 
-1. Python 3 muss installiert sein.
-2. Abhaengigkeiten installieren:
-   ```
-   pip install -r requirements.txt
-   ```
-3. Starten:
-   ```
-   python app.py
-   ```
-
-Es oeffnet sich automatisch ein Browserfenster auf `http://127.0.0.1:5151`.
-Falls nicht, den Link einfach manuell im Browser oeffnen.
-
-Die App zeigt automatisch die aktuell laufende Eventwoche (Donnerstag bis
-Mittwoch) mit allen Events. Zu jedem Event siehst du das zuletzt
+Die App zeigt die aktuell laufende Eventwoche (Donnerstag bis Mittwoch).
+Oben unter **Feedback schreiben fuer** kannst du Eventwoche 1–4 im
+aktuellen Zyklus waehlen. Zu jedem Event siehst du das zuletzt
 gespeicherte Feedback. Du kannst:
 - ein Textfeld ausfuellen -> wird als neues Feedback gespeichert,
 - oder das Feld einfach leer lassen -> das alte Feedback bleibt stehen

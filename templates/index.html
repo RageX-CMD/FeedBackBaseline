@@ -189,13 +189,83 @@
     border-radius: 8px;
     border: 1px solid var(--border);
   }
-    background: rgba(74, 222, 128, 0.12);
-    border: 1px solid rgba(74, 222, 128, 0.4);
-    color: var(--good);
+  .flash {
     padding: 12px 16px;
     border-radius: var(--radius);
     margin-bottom: 24px;
     font-size: 14px;
+    border: 1px solid var(--border);
+    background: var(--panel);
+  }
+  .flash.success {
+    background: rgba(74, 222, 128, 0.12);
+    border-color: rgba(74, 222, 128, 0.4);
+    color: var(--good);
+  }
+  .week-picker {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 24px;
+  }
+  .week-picker h2 {
+    margin: 0 0 6px;
+    font-size: 15px;
+  }
+  .week-picker .hint-line {
+    color: var(--text-dim);
+    font-size: 12.5px;
+    margin: 0 0 12px;
+  }
+  .week-picker-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  .week-picker select {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 14px;
+    min-width: 220px;
+  }
+  .week-picker select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .week-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    transition: all 0.15s ease;
+  }
+  .week-pill:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .week-pill.active {
+    background: var(--panel-2);
+    color: var(--text);
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+  .week-pill .now {
+    font-size: 10px;
+    font-weight: 700;
+    color: #1a0f07;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    padding: 2px 7px;
+    border-radius: 999px;
   }
   .reminder {
     background: var(--panel);
@@ -427,7 +497,9 @@
   <div class="header-right">
     <div class="week-switch">
       {% for w in [1,2,3,4] %}
-        <a href="{{ url_for('index', week=w) }}" class="{{ 'active' if w == week_number else '' }}">{{ week_names[w] }}</a>
+        <a href="{{ url_for('index', week=w) }}" class="{{ 'active' if w == week_number else '' }}">
+          W{{ w }}{% if w == current_num %} · jetzt{% endif %}
+        </a>
       {% endfor %}
     </div>
     <a class="ics-link" href="{{ url_for('kalender') }}">Kalender (.ics)</a>
@@ -440,6 +512,33 @@
       <div class="flash {{ category }}">{{ message }}</div>
     {% endfor %}
   {% endwith %}
+
+  <div class="week-picker">
+    <h2>Feedback schreiben fuer</h2>
+    <p class="hint-line">
+      Waehle die Eventwoche. Angezeigt wird der aktuelle Zyklus
+      ({{ week_ranges[1][0].strftime('%d.%m.') }}–{{ week_ranges[4][1].strftime('%d.%m.%Y') }}).
+      Laufend ist {{ week_names[current_num] }}.
+    </p>
+    <div class="week-picker-row">
+      <label for="week-select" class="visually-hidden" style="position:absolute;left:-9999px">Eventwoche</label>
+      <select id="week-select" onchange="if (this.value) window.location.href=this.value">
+        {% for w in [1,2,3,4] %}
+          <option value="{{ url_for('index', week=w) }}" {% if w == week_number %}selected{% endif %}>
+            {{ week_names[w] }}
+            ({{ week_ranges[w][0].strftime('%d.%m.') }}–{{ week_ranges[w][1].strftime('%d.%m.%Y') }})
+            {% if w == current_num %}— aktuell{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+      {% for w in [1,2,3,4] %}
+        <a class="week-pill {{ 'active' if w == week_number else '' }}" href="{{ url_for('index', week=w) }}">
+          {{ week_names[w] }}
+          {% if w == current_num %}<span class="now">jetzt</span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
 
   <div class="reminder {% if uploaded_this_week %}done{% elif days_until_deadline <= 1 %}urgent{% endif %}">
     <span>

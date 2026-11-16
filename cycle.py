@@ -36,15 +36,26 @@ def current_week_info(today: date = None):
 def week_info_for(eventwoche_nummer: int, today: date = None):
     """
     Gibt Start-/Enddatum fuer eine explizit gewaehlte Eventwoche
-    (1..4) zurueck, bezogen auf den aktuell laufenden bzw. naechsten
-    Durchlauf dieser Woche.
+    (1..4) zurueck — immer innerhalb des aktuellen 28-Tage-Zyklus
+    (der Zyklus, der das heutige Datum enthaelt).
+
+    So kannst du z.B. in Woche 3 noch Feedback fuer Woche 1 oder 2
+    derselben Runde schreiben, ohne in den naechsten Zyklus zu springen.
     """
     if today is None:
         today = date.today()
 
+    eventwoche_nummer = int(eventwoche_nummer)
+    if eventwoche_nummer < 1 or eventwoche_nummer > NUM_WEEKS_IN_CYCLE:
+        raise ValueError(f"Eventwoche muss 1..{NUM_WEEKS_IN_CYCLE} sein")
+
     current_num, current_start, _ = current_week_info(today)
-    offset_weeks = (eventwoche_nummer - current_num) % NUM_WEEKS_IN_CYCLE
-    week_start = current_start + timedelta(days=offset_weeks * WEEK_LENGTH_DAYS)
+    cycle_start = current_start - timedelta(
+        days=(current_num - 1) * WEEK_LENGTH_DAYS
+    )
+    week_start = cycle_start + timedelta(
+        days=(eventwoche_nummer - 1) * WEEK_LENGTH_DAYS
+    )
     week_end = week_start + timedelta(days=WEEK_LENGTH_DAYS - 1)
     return eventwoche_nummer, week_start, week_end
 

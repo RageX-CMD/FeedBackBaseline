@@ -4,3 +4,7 @@ __pycache__/
 venv/
 .env
 snapshots/
+data/
+output/
+eventwochen.db
+.vscode/

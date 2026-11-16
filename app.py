@@ -43,9 +43,12 @@ db.seed_events(SEED_DATA, overwrite=False)
 
 
 def get_week(week_arg):
-    if week_arg:
+    if not week_arg:
+        return current_week_info()
+    try:
         return week_info_for(int(week_arg))
-    return current_week_info()
+    except (TypeError, ValueError):
+        return current_week_info()
 
 
 @app.route("/", methods=["GET"])
@@ -83,12 +86,18 @@ def index():
     forum_new_url = forum_post_url(forum_links["new"]) if forum_links.get("new") else ""
     forum_new_is_current = forum_links.get("new_is_current", True)
 
+    week_ranges = {}
+    for w in (1, 2, 3, 4):
+        _, ws, we = week_info_for(w, today)
+        week_ranges[w] = (ws, we)
+
     return render_template(
         "index.html",
         week_number=week_number,
         week_names=WEEK_NAMES,
         week_start=week_start,
         week_end=week_end,
+        week_ranges=week_ranges,
         events=events,
         today=today,
         last_doc=last_doc,
